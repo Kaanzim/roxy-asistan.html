@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>R.O.X.Y — Otonom Asistan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root{
+  --bg: #050a10;
+  --panel: #0c1622;
+  --panel2: #101d2e;
+  --cyan: #5ee7ff;
+  --cyan-dim: rgba(94,231,255,0.15);
+  --amber: #ff8c42;
+  --amber-dim: rgba(255,140,66,0.15);
+  --text: #e7f2fb;
+  --muted: #5d7d96;
+  --border: rgba(94,231,255,0.16);
+  --danger: #ff5c6c;
+}
+
+* { box-sizing: border-box; margin:0; padding:0; }
+
+html,body{ height:100%; }
+
+body{
+  background: radial-gradient(ellipse at top, #0b1726 0%, #050a10 60%);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  min-height: 100vh;
+  display:flex;
+  justify-content:center;
+}
+
+.app{
+  width:100%;
+  max-width: 920px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  padding: 14px 14px 0;
+}
+
+/* HEADER */
+header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 6px 4px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.brand-mark{
+  width:34px; height:34px;
+  border:2px solid var(--cyan);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Orbitron', sans-serif;
+  font-size:12px; font-weight:900;
+  color:var(--cyan);
+  box-shadow: 0 0 12px var(--cyan-dim);
+  flex-shrink:0;
+}
+.brand-text h1{
+  font-family:'Orbitron', sans-serif;
+  font-size: 18px;
+  letter-spacing: 4px;
+  font-weight:700;
+  color: var(--text);
+}
+.brand-text p{
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-top:2px;
+}
+.voice-toggle{
+  display:flex; align-items:center; gap:8px;
+  font-size:12px; letter-spacing:1px; color:var(--muted);
+  cursor:pointer; user-select:none;
+}
+.switch{
+  width:38px; height:20px; border-radius:20px;
+  background: var(--panel2);
+  border:1px solid var(--border);
+  position:relative; transition: .2s;
+}
+.switch::after{
+  content:''; position:absolute; top:2px; left:2px;
+  width:14px; height:14px; border-radius:50%;
+  background: var(--muted); transition:.2s;
+}
+.switch.on{ background: var(--cyan-dim); border-color: var(--cyan); }
+.switch.on::after{ background: var(--cyan); transform: translateX(18px); box-shadow:0 0 8px var(--cyan); }
+
+/* REACTOR / CORE */
+.reactor-wrap{
+  display:flex; flex-direction:column; align-items:center;
+  padding: 22px 0 14px;
+}
+.reactor{
+  position: relative;
+  width: 140px; height:140px;
+}
+.ring{
+  position:absolute; inset:0; border-radius:50%;
+  border: 2px solid transparent;
+}
+.ring-outer{
+  border-top-color: var(--cyan);
+  border-right-color: var(--cyan);
+  animation: spin 6s linear infinite;
+  box-shadow: 0 0 18px var(--cyan-dim) inset;
+}
+.ring-mid{
+  inset: 16px;
+  border-bottom-color: var(--amber);
+  border-left-color: var(--amber);
+  opacity:.55;
+  animation: spin 9s linear infinite reverse;
+}
+.core{
+  position:absolute; inset: 42px; border-radius:50%;
+  background: radial-gradient(circle, var(--cyan) 0%, rgba(94,231,255,0.25) 55%, transparent 75%);
+  box-shadow: 0 0 30px var(--cyan-dim);
+  animation: pulse 3.2s ease-in-out infinite;
+  transition: background .3s, box-shadow .3s;
+}
+.reactor.listening .core{
+  background: radial-gradient(circle, var(--amber) 0%, rgba(255,140,66,0.28) 55%, transparent 75%);
+  box-shadow: 0 0 36px var(--amber-dim);
+  animation: pulse 1s ease-in-out infinite;
+}
+.reactor.listening .ring-outer{ animation-duration: 2s; }
+.reactor.thinking .core{ animation: flicker 0.6s ease-in-out infinite; }
+.reactor.speaking .core{ animation: pulse 0.5s ease-in-out infinite; }
+
+@keyframes spin{ to{ transform: rotate(360deg); } }
+@keyframes pulse{
+  0%,100%{ transform: scale(1); opacity:.85; }
+  50%{ transform: scale(1.08); opacity:1; }
+}
+@keyframes flicker{
+  0%,100%{ opacity: .6; }
+  50%{ opacity: 1; }
+}
+
+.reactor-status{
+  margin-top: 10px;
+  font-family:'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+.reactor.listening + .reactor-status,
+.reactor-status.listening{ color: var(--amber); }
+
+/* TABS */
+.tabs{
+  display:flex; gap:6px; padding: 14px 0 10px;
+}
+.tab{
+  flex:1; padding:9px 0; text-align:center;
+  font-size:13px; letter-spacing:2px; text-transform:uppercase;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color: var(--muted);
+  cursor:pointer;
+  transition:.15s;
+}
+.tab.active{
+  color: var(--cyan);
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+}
+
+/* MAIN PANELS */
+.panel{ display:none; flex:1; flex-direction:column; min-height:0; }
+.panel.active{ display:flex; }
+
+/* CHAT */
+.chat-scroll{
+  flex:1; overflow-y:auto; padding: 6px 2px 14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.msg{
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 15px;
+  line-height:1.45;
+  word-wrap: break-word;
+}
+.msg.user{
+  align-self:flex-end;
+  background: var(--amber-dim);
+  border:1px solid rgba(255,140,66,0.35);
+  border-bottom-right-radius:2px;
+}
+.msg.assistant{
+  align-self:flex-start;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-bottom-left-radius:2px;
+}
+.msg.system-note{
+  align-self:center;
+  color: var(--muted);
+  font-size:12px;
+  letter-spacing:1px;
+  text-transform:uppercase;
+}
+.msg .label{
+  display:block;
+  font-family:'Orbitron', sans-serif;
+  font-size:9px;
+  letter-spacing:2px;
+  margin-bottom:4px;
+  color: var(--muted);
+}
+.msg.user .label{ color: var(--amber); text-align:right; }
+.msg.assistant .label{ color: var(--cyan); }
+.code-block{
+  background:#040a12;
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px;
+  margin:8px 0;
+  overflow-x:auto;
+  font-family:'JetBrains Mono', monospace;
+  font-size:12.5px;
+  color:#bdeeff;
+  white-space:pre;
+}
+.inline-code{
+  font-family:'JetBrains Mono', monospace;
+  background: rgba(94,231,255,0.1);
+  padding: 1px 5px;
+  border-radius:4px;
+  font-size: 0.9em;
+  color: var(--cyan);
+}
+
+/* INPUT BAR */
+.input-bar{
+  display:flex; gap:8px; padding: 10px 0 14px;
+  border-top: 1px solid var(--border);
+}
+.input-bar input[type=text]{
+  flex:1;
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  color: var(--text);
+  font-family:'Rajdhani', sans-serif;
+  font-size: 15px;
+  outline:none;
+}
+.input-bar input[type=text]:focus{ border-color: var(--cyan); }
+.icon-btn{
+  width:46px; height:46px; flex-shrink:0;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background: var(--panel);
+  color: var(--cyan);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer;
+  transition:.15s;
+}
+.icon-btn:hover{ border-color: var(--cyan); }
+.icon-btn.send{ background: var(--cyan-dim); }
+.icon-btn.mic.active{
+  background: var(--amber-dim);
+  border-color: var(--amber);
+  color: var(--amber);
+  box-shadow: 0 0 0 0 rgba(255,140,66,0.6);
+  animation: mic-pulse 1s ease-out infinite;
+}
+@keyframes mic-pulse{
+  0%  { box-shadow: 0 0 0 0 rgba(255,140,66,0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(255,140,66,0); }
+  100%{ box-shadow: 0 0 0 0 rgba(255,140,66,0); }
+}
+/* Mikrofon etiketi */
+.mic-label{
+  font-size:9px; letter-spacing:1.5px; color:var(--amber);
+  text-transform:uppercase; text-align:center;
+  font-family:'Orbitron',sans-serif;
+  animation: blink 1s step-start infinite;
+  display:none;
+}
+.mic-label.visible{ display:block; }
+@keyframes blink{ 50%{ opacity:0; } }
+.icon-btn svg{ width:20px; height:20px; }
+
+/* NOTES & REMINDERS */
+.list-panel{ flex:1; overflow-y:auto; padding: 6px 2px 14px; display:flex; flex-direction:column; gap:8px; }
+.add-form{ display:flex; gap:8px; padding: 10px 0 14px; border-top:1px solid var(--border); }
+.add-form textarea, .add-form input{
+  background: var(--panel); border:1px solid var(--border); border-radius:10px;
+  color: var(--text); font-family:'Rajdhani', sans-serif; font-size:14px;
+  padding:10px 12px; outline:none; resize:none;
+}
+.add-form textarea{ flex:1; min-height:46px; max-height:46px; }
+.add-form input[type=datetime-local]{ flex: 1; color-scheme: dark; }
+.add-form .icon-btn{ align-self:stretch; height:auto; }
+
+.item-card{
+  background: var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding: 10px 12px;
+  display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+}
+.item-card .content{ flex:1; }
+.item-card .content p{ font-size:14px; line-height:1.4; }
+.item-card .meta{ font-size:11px; color: var(--muted); letter-spacing:1px; margin-top:4px; text-transform:uppercase; }
+.item-card.due{ border-color: var(--amber); background: var(--amber-dim); }
+.item-card.due .meta{ color: var(--amber); }
+.del-btn{
+  background:none; border:none; color: var(--muted); cursor:pointer;
+  font-size:18px; line-height:1; padding:2px 4px; flex-shrink:0;
+}
+.del-btn:hover{ color: var(--danger); }
+.empty-state{ color: var(--muted); font-size:13px; text-align:center; padding: 30px 10px; letter-spacing:1px; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar{ width:6px; }
+::-webkit-scrollbar-thumb{ background: var(--border); border-radius:3px; }
+
+
+
+/* MOBILE FIXES */
+.tabs{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  flex-wrap: nowrap;
+  padding-bottom: 4px;
+}
+.tabs::-webkit-scrollbar{ display:none; }
+.tab{
+  flex: 0 0 auto;
+  min-width: 70px;
+  font-size: 11px;
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.input-bar{ flex-wrap: nowrap; }
+.icon-btn{ width:44px; height:44px; flex-shrink:0; }
+
+/* Mesaj paneli mobil */
+#msgPanel .add-form > div:first-child{
+  flex-wrap: wrap;
+  gap: 6px;
+}
+#msgPhone{ flex: 1 1 100% !important; min-width: 0; }
+#msgName{ flex: 1 1 auto !important; min-width: 0; }
+
+/* Math quick buttons */
+.math-quick{ font-size:12px; padding:4px 8px; touch-action: manipulation; }
+
+/* Genel padding azalt mobilde */
+@media (max-width: 480px){
+  .app{ padding: 8px 8px 0; }
+  .brand-text h1{ font-size:15px; letter-spacing:2px; }
+  .brand-text p{ font-size:9px; }
+  .reactor{ width:100px; height:100px; }
+  .ring-mid{ inset:12px; }
+  .core{ inset:30px; }
+  .reactor-wrap{ padding: 12px 0 8px; }
+  .msg{ font-size:14px; }
+}
+
+@media (min-width: 700px){
+  .reactor{ width:170px; height:170px; }
+  .ring-mid{ inset:20px; }
+  .core{ inset:50px; }
+}
+</style>
+</head>
+<body>
+
+
+
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">RX</div>
+      <div class="brand-text">
+        <h1>R.O.X.Y</h1>
+        <p>Reactive Omniscient eXpert for You</p>
+      </div>
+    </div>
+    <div class="voice-toggle" id="voiceToggle">
+      <span>Sesli Yanıt</span>
+      <div class="switch on" id="voiceSwitch"></div>
+    </div>
+  </header>
+
+  <div class="reactor-wrap">
+    <div class="reactor" id="reactor">
+      <div class="ring ring-outer"></div>
+      <div class="ring ring-mid"></div>
+      <div class="core" id="core"></div>
+    </div>
+    <div class="reactor-status" id="status">ÇEVRİMİÇİ</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-panel="chatPanel">Sohbet</div>
+    <div class="tab" data-panel="notesPanel">Notlar</div>
+    <div class="tab" data-panel="remindersPanel">Hatırlatıcılar</div>
+    <div class="tab" data-panel="mathPanel">Matematik</div>
+    <div class="tab" data-panel="msgPanel">Mesaj</div>
+  </div>
+
+  <!-- CHAT PANEL -->
+  <div class="panel active" id="chatPanel">
+    <div class="chat-scroll" id="chatScroll"></div>
+    <div class="input-bar">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <button class="icon-btn mic" id="micBtn" title="Sesle konuş">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        </button>
+        <span class="mic-label" id="micLabel">DİNLİYOR</span>
+      </div>
+      <input type="text" id="chatInput" placeholder="Bir komut ya da soru yaz..." autocomplete="off">
+      <button class="icon-btn send" id="sendBtn" title="Gönder">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- NOTES PANEL -->
+  <div class="panel" id="notesPanel">
+    <div class="list-panel" id="notesList"></div>
+    <div class="add-form">
+      <textarea id="noteInput" placeholder="Yeni not yaz..."></textarea>
+      <button class="icon-btn send" id="addNoteBtn" title="Notu kaydet">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- REMINDERS PANEL -->
+  <div class="panel" id="remindersPanel">
+    <div class="list-panel" id="remindersList"></div>
+    <div class="add-form" style="flex-wrap:wrap;">
+      <textarea id="reminderInput" placeholder="Hatırlatıcı metni..." style="flex:1 1 100%;"></textarea>
+      <input type="datetime-local" id="reminderTime" style="flex:1;">
+      <button class="icon-btn send" id="addReminderBtn" title="Hatırlatıcı ekle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+    </div>
+  </div>
+
+
+  <!-- MATH PANEL -->
+  <div class="panel" id="mathPanel">
+    <div class="list-panel" id="mathHistory"></div>
+    <div class="add-form" style="flex-direction:column; gap:8px;">
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="mathInput" placeholder="Örn: 2x^2 + 3x - 5 = 0  veya  sin(pi/4) + sqrt(16)" style="flex:1; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px; outline:none;">
+        <button class="icon-btn send" id="mathSolveBtn" title="Hesapla">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="math-quick" onclick="insertMath('sqrt(')">√</button>
+        <button class="math-quick" onclick="insertMath('^2')">x²</button>
+        <button class="math-quick" onclick="insertMath('pi')">π</button>
+        <button class="math-quick" onclick="insertMath('sin(')">sin</button>
+        <button class="math-quick" onclick="insertMath('cos(')">cos</button>
+        <button class="math-quick" onclick="insertMath('tan(')">tan</button>
+        <button class="math-quick" onclick="insertMath('log(')">log</button>
+        <button class="math-quick" onclick="insertMath('e^')">eˣ</button>
+        <button class="math-quick" onclick="insertMath('abs(')">|x|</button>
+        <button class="math-quick" onclick="insertMath('factorial(')">n!</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGE PANEL -->
+  <div class="panel" id="msgPanel">
+    <div class="list-panel" id="msgContactsList">
+      <div style="color:var(--muted);font-size:12px;letter-spacing:1px;text-transform:uppercase;padding:10px 0 6px;">Hızlı Mesaj Gönder (WhatsApp)</div>
+    </div>
+    <div class="add-form" style="flex-direction:column; gap:8px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <input type="text" id="msgPhone" placeholder="Telefon numarası (905XXXXXXXXX)" style="flex:1 1 100%;min-width:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:14px; outline:none;">
+        <input type="text" id="msgName" placeholder="İsim (opsiyonel)" style="flex:1 1 auto;min-width:0; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:14px; outline:none;">
+        <button class="icon-btn send" id="saveContactBtn" title="Kişiyi kaydet">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <textarea id="msgText" placeholder="Mesaj metni..." style="flex:1; min-height:60px; max-height:60px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:10px 12px; color:var(--text); font-family:'Rajdhani',sans-serif; font-size:14px; outline:none; resize:none;"></textarea>
+        <button class="icon-btn send" id="sendWABtn" title="WhatsApp'ta gönder" style="height:auto; align-self:stretch; background:rgba(37,211,102,0.15); border-color:rgba(37,211,102,0.4); color:#25d366;">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.12.0/math.min.js"></script>
+<script>
+const SYSTEM_PROMPT = `Sen R.O.X.Y adında, kullanıcının kişisel yapay zeka asistanısın. Tarzın JARVIS benzeri: kibar, kısa-öz, biraz resmi ama samimi, bazen hafif esprili. Türkçe konuşuyorsun.
+Görevlerin:
+- Kullanıcıya kodlama konularında yardım et: kod yaz, hata ayıkla, açıklama yap. Kod bloklarını \`\`\` ile ver.
+- Matematik ve denklem çöz. Kullanıcı denklem sorarsa adım adım çözümü göster.
+- Genel asistanlık yap: soru cevapla, fikir üret, planlama yardımı yap.
+- Notlar ve hatırlatıcılar uygulamanın kendi panelleri üzerinden tutuluyor; kullanıcı bunlardan bahsederse, ilgili sekmeyi (Notlar / Hatırlatıcılar) kullanmasını hatırlatabilirsin.
+- Cevapların sesli okunabileceği için çok uzun kod blokları dışında kısa ve akıcı cümleler kur.
+Kendini "yapay zeka modeli" gibi tanıtma, doğal bir asistan gibi davran.`;
+
+// ---------- STATE ----------
+let chatHistory = []; // {role, content}
+let notes = [];
+let reminders = [];
+let voiceReplyOn = true;
+let isListening = false;
+let isSpeaking = false;
+let recognition = null;
+
+// ---------- ELEMENTS ----------
+const reactor = document.getElementById('reactor');
+const statusEl = document.getElementById('status');
+const chatScroll = document.getElementById('chatScroll');
+const chatInput = document.getElementById('chatInput');
+const sendBtn = document.getElementById('sendBtn');
+const micBtn = document.getElementById('micBtn');
+const micLabel = document.getElementById('micLabel');
+const voiceSwitch = document.getElementById('voiceSwitch');
+const voiceToggle = document.getElementById('voiceToggle');
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+
+// ---------- HELPERS ----------
+function setReactorState(state){
+  reactor.classList.remove('listening','thinking','speaking');
+  if(state) reactor.classList.add(state);
+  const labels = { idle:'ÇEVRİMİÇİ', listening:'DİNLİYOR...', thinking:'DÜŞÜNÜYOR...', speaking:'KONUŞUYOR...' };
+  statusEl.textContent = labels[state] || labels.idle;
+}
+
+function escapeHtml(s){
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatMessage(text){
+  let out = escapeHtml(text);
+  out = out.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, (m, lang, code) => `<pre class="code-block"><code>${code.trim()}</code></pre>`);
+  out = out.replace(/`([^`\n]+)`/g, '<code class="inline-code">$1</code>');
+  out = out.replace(/\n/g, '<br>');
+  return out;
+}
+
+function addMessageToUI(role, text){
+  const div = document.createElement('div');
+  if(role === 'system-note'){
+    div.className = 'msg system-note';
+    div.textContent = text;
+  } else {
+    div.className = 'msg ' + role;
+    const label = document.createElement('span');
+    label.className = 'label';
+    label.textContent = role === 'user' ? 'SEN' : 'R.O.X.Y';
+    const body = document.createElement('div');
+    body.innerHTML = formatMessage(text);
+    div.appendChild(label);
+    div.appendChild(body);
+  }
+  chatScroll.appendChild(div);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+// ---------- OPENROUTER API ----------
+const PROXY_URL = 'https://lroxy-proxy.kaanzimyanhesap.workers.dev';
+
+async function callAria(userText){
+  setReactorState('thinking');
+  chatHistory.push({ role:'user', content: userText });
+  const trimmed = chatHistory.slice(-12);
+
+  const messages = [
+    { role: 'system', content: SYSTEM_PROMPT },
+    ...trimmed.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }))
+  ];
+
+  try {
+    const response = await fetch(PROXY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "meta-llama/llama-3.3-8b-instruct:free",
+        max_tokens: 1000,
+        messages
+      })
+    });
+    const data = await response.json();
+    if(data.error){ throw new Error(data.error.message); }
+    let text = data.choices?.[0]?.message?.content || '';
+    if(!text){ text = "Şu an bir yanıt oluşturamadım, tekrar dener misin?"; }
+    chatHistory.push({ role:'assistant', content: text });
+    addMessageToUI('assistant', text);
+    if(voiceReplyOn) speak(text);
+    else setReactorState('idle');
+  } catch (err) {
+    console.error(err);
+    addMessageToUI('assistant', 'Bağlantıda bir sorun oluştu.');
+    setReactorState('idle');
+  }
+}
+
+function sendMessage(){
+  const text = chatInput.value.trim();
+  if(!text) return;
+  addMessageToUI('user', text);
+  chatInput.value = '';
+  callAria(text);
+}
+sendBtn.addEventListener('click', sendMessage);
+chatInput.addEventListener('keydown', e => { if(e.key === 'Enter') sendMessage(); });
+
+// ---------- SPEECH RECOGNITION ----------
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+if(SpeechRecognitionAPI){
+  recognition = new SpeechRecognitionAPI();
+  recognition.lang = 'tr-TR';
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('active');
+    micLabel.classList.add('visible');
+    setReactorState('listening');
+  };
+  recognition.onend = () => {
+    isListening = false;
+    micBtn.classList.remove('active');
+    micLabel.classList.remove('visible');
+    if(reactor.classList.contains('listening')) setReactorState('idle');
+  };
+  recognition.onerror = () => {
+    isListening = false;
+    micBtn.classList.remove('active');
+    micLabel.classList.remove('visible');
+    setReactorState('idle');
+  };
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    addMessageToUI('user', transcript);
+    callAria(transcript);
+  };
+
+  micBtn.addEventListener('click', () => {
+    if(isSpeaking){ window.speechSynthesis.cancel(); isSpeaking = false; }
+    if(isListening){ recognition.stop(); }
+    else { recognition.start(); }
+  });
+} else {
+  micBtn.style.opacity = '0.3';
+  micBtn.title = 'Bu tarayıcı sesli komutu desteklemiyor';
+  micBtn.addEventListener('click', () => {
+    addMessageToUI('system-note', 'Bu tarayıcı ses tanımayı desteklemiyor. Yazarak devam edebilirsin.');
+  });
+}
+
+// ---------- SPEECH SYNTHESIS ----------
+function speak(text){
+  if(!('speechSynthesis' in window)){ setReactorState('idle'); return; }
+  window.speechSynthesis.cancel();
+  // strip code blocks from spoken text
+  const spoken = text.replace(/```[\s\S]*?```/g, ' Kod bloğunu ekrandan inceleyebilirsin. ').replace(/`/g, '');
+  const utter = new SpeechSynthesisUtterance(spoken);
+  const voices = window.speechSynthesis.getVoices();
+  const trVoice = voices.find(v => v.lang && v.lang.toLowerCase().startsWith('tr'));
+  if(trVoice) utter.voice = trVoice;
+  utter.lang = trVoice ? trVoice.lang : 'tr-TR';
+  utter.rate = 1;
+  utter.onstart = () => { isSpeaking = true; setReactorState('speaking'); };
+  utter.onend = () => { isSpeaking = false; setReactorState('idle'); };
+  utter.onerror = () => { isSpeaking = false; setReactorState('idle'); };
+  window.speechSynthesis.speak(utter);
+}
+// preload voices (some browsers load async)
+if('speechSynthesis' in window){
+  window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+}
+
+voiceToggle.addEventListener('click', () => {
+  voiceReplyOn = !voiceReplyOn;
+  voiceSwitch.classList.toggle('on', voiceReplyOn);
+  if(!voiceReplyOn && isSpeaking){ window.speechSynthesis.cancel(); isSpeaking = false; setReactorState('idle'); }
+});
+
+// ---------- STORAGE (localStorage — her tarayıcıda çalışır) ----------
+async function loadData(){
+  try { notes = JSON.parse(localStorage.getItem('aria-notes') || '[]'); } catch { notes = []; }
+  try { reminders = JSON.parse(localStorage.getItem('aria-reminders') || '[]'); } catch { reminders = []; }
+  renderNotes();
+  renderReminders();
+}
+async function saveNotes(){
+  try { localStorage.setItem('aria-notes', JSON.stringify(notes)); } catch(e){ console.error(e); }
+}
+async function saveReminders(){
+  try { localStorage.setItem('aria-reminders', JSON.stringify(reminders)); } catch(e){ console.error(e); }
+}
+
+// ---------- NOTES ----------
+const notesList = document.getElementById('notesList');
+const noteInput = document.getElementById('noteInput');
+document.getElementById('addNoteBtn').addEventListener('click', () => {
+  const text = noteInput.value.trim();
+  if(!text) return;
+  notes.unshift({ id: Date.now(), text, created: new Date().toISOString() });
+  noteInput.value = '';
+  saveNotes();
+  renderNotes();
+});
+function renderNotes(){
+  notesList.innerHTML = '';
+  if(notes.length === 0){
+    notesList.innerHTML = '<div class="empty-state">Henüz not yok. Aşağıdan ekleyebilirsin.</div>';
+    return;
+  }
+  notes.forEach(note => {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    const date = new Date(note.created);
+    card.innerHTML = `<div class="content"><p>${escapeHtml(note.text)}</p><div class="meta">${date.toLocaleDateString('tr-TR')} ${date.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</div></div>`;
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.innerHTML = '&times;';
+    del.addEventListener('click', () => {
+      notes = notes.filter(n => n.id !== note.id);
+      saveNotes();
+      renderNotes();
+    });
+    card.appendChild(del);
+    notesList.appendChild(card);
+  });
+}
+
+// ---------- REMINDERS ----------
+const remindersList = document.getElementById('remindersList');
+const reminderInput = document.getElementById('reminderInput');
+const reminderTime = document.getElementById('reminderTime');
+document.getElementById('addReminderBtn').addEventListener('click', () => {
+  const text = reminderInput.value.trim();
+  const time = reminderTime.value;
+  if(!text || !time) return;
+  reminders.push({ id: Date.now(), text, time, notified: false });
+  reminders.sort((a,b) => new Date(a.time) - new Date(b.time));
+  reminderInput.value = '';
+  reminderTime.value = '';
+  saveReminders();
+  renderReminders();
+});
+function renderReminders(){
+  remindersList.innerHTML = '';
+  if(reminders.length === 0){
+    remindersList.innerHTML = '<div class="empty-state">Henüz hatırlatıcı yok.</div>';
+    return;
+  }
+  const now = new Date();
+  reminders.forEach(rem => {
+    const card = document.createElement('div');
+    const due = new Date(rem.time) <= now;
+    card.className = 'item-card' + (due ? ' due' : '');
+    const d = new Date(rem.time);
+    card.innerHTML = `<div class="content"><p>${escapeHtml(rem.text)}</p><div class="meta">${d.toLocaleDateString('tr-TR')} ${d.toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}${due ? ' · ZAMANI GELDİ' : ''}</div></div>`;
+    const del = document.createElement('button');
+    del.className = 'del-btn';
+    del.innerHTML = '&times;';
+    del.addEventListener('click', () => {
+      reminders = reminders.filter(r => r.id !== rem.id);
+      saveReminders();
+      renderReminders();
+    });
+    card.appendChild(del);
+    remindersList.appendChild(card);
+  });
+}
+
+// check reminders periodically
+setInterval(() => {
+  const now = new Date();
+  let changed = false;
+  reminders.forEach(rem => {
+    if(!rem.notified && new Date(rem.time) <= now){
+      rem.notified = true;
+      changed = true;
+      addMessageToUI('system-note', '⏰ Hatırlatıcı: ' + rem.text);
+      if(voiceReplyOn) speak('Hatırlatıcı: ' + rem.text);
+    }
+  });
+  if(changed){ saveReminders(); renderReminders(); }
+  renderReminders(); // refresh "due" styling
+}, 15000);
+
+// ---------- MATH ----------
+const mathInput = document.getElementById('mathInput');
+const mathSolveBtn = document.getElementById('mathSolveBtn');
+const mathHistory = document.getElementById('mathHistory');
+
+function insertMath(str){ mathInput.value += str; mathInput.focus(); }
+
+function solveMath(){
+  const expr = mathInput.value.trim();
+  if(!expr) return;
+  const card = document.createElement('div');
+  card.className = 'item-card';
+  card.style.flexDirection = 'column';
+  let resultHtml = '';
+  try {
+    const result = math.evaluate(expr);
+    const formatted = math.format(result, {precision:10});
+    resultHtml = `<span style="color:var(--cyan);font-size:12px;letter-spacing:1px">SONUÇ</span><br><span style="font-size:22px;font-family:'Orbitron',sans-serif;color:var(--text);">${escapeHtml(formatted)}</span>`;
+  } catch(err){
+    // denklem çözmeyi AI'ya bırak
+    resultHtml = `<span style="color:var(--amber);font-size:12px;">Doğrudan hesaplanamadı, R.O.X.Y'e soruyorum...</span>`;
+    callAria('Şu denklemi/ifadeyi adım adım çöz: ' + expr);
+  }
+  card.innerHTML = `<div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:6px;">${escapeHtml(expr)}</div><div style="line-height:1.7;">${resultHtml}</div>`;
+  const del = document.createElement('button');
+  del.className='del-btn'; del.innerHTML='&times;';
+  del.addEventListener('click',()=>card.remove());
+  card.appendChild(del);
+  mathHistory.prepend(card);
+  mathInput.value = '';
+  mathInput.focus();
+}
+mathSolveBtn.addEventListener('click', solveMath);
+mathInput.addEventListener('keydown', e => { if(e.key==='Enter') solveMath(); });
+
+// ---------- MESSAGING ----------
+let contacts = [];
+async function loadContacts(){
+  try { contacts = JSON.parse(localStorage.getItem('roxy-contacts') || '[]'); } catch { contacts=[]; }
+  renderContacts();
+}
+async function saveContacts(){
+  try { localStorage.setItem('roxy-contacts', JSON.stringify(contacts)); } catch(e){ console.error(e); }
+}
+function renderContacts(){
+  const list = document.getElementById('msgContactsList');
+  const header = list.querySelector('div');
+  list.innerHTML = '';
+  list.appendChild(header);
+  if(contacts.length === 0){
+    const empty = document.createElement('div');
+    empty.className='empty-state';
+    empty.textContent='Kayitli kisi yok. Asagidan ekleyebilirsin.';
+    list.appendChild(empty);
+    return;
+  }
+  contacts.forEach(c => {
+    const card = document.createElement('div');
+    card.className='item-card';
+    card.style.cursor='pointer';
+    card.innerHTML=`<div class="content"><p>${escapeHtml(c.name||c.phone)}</p><div class="meta">${escapeHtml(c.phone)}</div></div>`;
+    card.addEventListener('click', ()=>{
+      document.getElementById('msgPhone').value = c.phone;
+      document.getElementById('msgText').focus();
+    });
+    const del=document.createElement('button');
+    del.className='del-btn'; del.innerHTML='&times;';
+    del.addEventListener('click',(e)=>{ e.stopPropagation(); contacts=contacts.filter(x=>x.phone!==c.phone); saveContacts(); renderContacts(); });
+    card.appendChild(del);
+    list.appendChild(card);
+  });
+}
+document.getElementById('saveContactBtn').addEventListener('click',()=>{
+  const phone = document.getElementById('msgPhone').value.trim().replace(/\D/g,'');
+  const name = document.getElementById('msgName').value.trim();
+  if(!phone) return;
+  if(!contacts.find(c=>c.phone===phone)) contacts.push({phone,name});
+  saveContacts(); renderContacts();
+  document.getElementById('msgName').value='';
+});
+document.getElementById('sendWABtn').addEventListener('click',()=>{
+  const phone = document.getElementById('msgPhone').value.trim().replace(/\D/g,'');
+  const text = document.getElementById('msgText').value.trim();
+  if(!phone){ alert('Telefon numarasi gir!'); return; }
+  const url = 'https://wa.me/' + phone + (text ? '?text='+encodeURIComponent(text) : '');
+  window.open(url,'_blank');
+});
+
+// ---------- MATH CSS ----------
+const mathStyle = document.createElement('style');
+mathStyle.textContent = `.math-quick { background:var(--panel); border:1px solid var(--border); border-radius:6px; color:var(--cyan); padding:5px 10px; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:13px; transition:.15s; } .math-quick:hover { border-color:var(--cyan); background:var(--cyan-dim); }`;
+document.head.appendChild(mathStyle);
+
+// ---------- INIT ----------
+setReactorState('idle');
+addMessageToUI('assistant', 'Merhaba. Ben R.O.X.Y — kodlama, matematik ve gunluk islerinde yardimci olmak icin buradayim. Mikrofon ikonuna basip konusabilir ya da yazabilirsin.');
+loadData();
+loadContacts();
+</script>
+</body>
+</html>
